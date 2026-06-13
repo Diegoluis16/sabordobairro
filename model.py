@@ -1,12 +1,13 @@
 import sqlite3
 
-# CORREÇÃO DE HOSPEDAGEM: Utiliza a memória RAM para contornar o bloqueio de gravação do Render
-DATABASE = ':memory:'
+# CONFIGURAÇÃO DE NUVEM: Utiliza a pasta temporária /tmp/ que possui permissão de gravação no Render
+DATABASE = '/tmp/sabor_bairro_mvc.db'
 
 def conectar_bd():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = conectar_bd()
