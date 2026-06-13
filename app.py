@@ -18,12 +18,7 @@ def add_header(response):
     response.headers['Expires'] = '0'
     return response
 
-# GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
-@app.before_request
-def inicializar_banco_na_nuvem():
-    if not hasattr(app, 'banco_inicializado'):
-        model.init_db()
-        app.banco_inicializado = True
+
 
 # --- ROTAS DE LOGIN E SESSÃO ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -145,7 +140,8 @@ def api_deletar_usuario(id_usuario):
     return jsonify({'sucesso': True})
 
 if __name__ == '__main__':
+    # Inicializa o banco físico na pasta /tmp do Linux uma única vez ao ligar
+    model.init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
-
 
 
