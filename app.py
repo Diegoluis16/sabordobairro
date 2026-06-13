@@ -1,0 +1,177 @@
+import time
+from flask import Flask, jsonify, render_template, request, redirect, session
+import model  # Importa o nosso Model do MVC
+
+app = Flask(__name__)
+
+# CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
+app.secret_key = 'sabor_do_bairro_chave_ultra_secreta_123'
+
+# --- CONFIGURAÇÃO ANTI-CACHE ---
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+# --- ROTAS DE LOGIN E SESSÃO (CONTROLLER) ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        usuario = request.form.get('txt_usuario', '').strip()
+        senha = request.form.get('txt_senha', '').strip()
+        
+        usuario_logado = model.verificar_credenciais(usuario, senha)
+        
+        if usuario_logado:
+            session['user_id'] = usuario_logado['id']
+            session['user_login'] = usuario_logado['usuario']
+            session['user_nome'] = usuario_logado['nome_completo']
+            return redirect('/')
+        else:
+            return render_template('login.html', erro='Usuário ou senha incorretos!')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
+
+# --- ROTA PRINCIPAL DO CAIXA (FORÇANDO ATUALIZAÇÃO DE CACHE) ---
+
+@app.route('/')
+def index():
+    if 'user_id' not in session:
+        return redirect('/login')
+    # O tempo dinâmico limpa a memória do navegador forçadamente
+    return render_template('index.html', versao=str(time.time()), usuario_nome=session['user_nome'])
+
+
+# --- ROTA DO APP DO CLIENTE ---
+
+@app.route('/pedido')
+def pedido_cliente():
+    # Puxa os dados atualizados direto do nosso Model
+    lista_produtos = model.obter_todos_produtos()
+    
+    # Prepara os dados no formato exato que o cliente.html espera ler
+    produtos_formatados = []
+    for p in lista_produtos:
+        produtos_formatados.append({
+            'nome': str(p['nome']),
+            'preco': float(p['preco'])
+        })
+        
+    # Envia a lista limpa para a tela do cardápio
+    return render_template('cliente.html', produtos_cardapio=produtos_formatados)
+
+# --- ROTAS DA API: PRODUTOS ---
+
+@app.route('/api/produtos', methods=['GET'])
+def api_listar_produtos():
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    return jsonify(model.obter_todos_produtos())
+
+@app.route('/api/produtos', methods=['POST'])
+def api_cadastrar_produto():
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    dados = request.json
+    nome = dados.get('nome', '').strip()
+    preco = dados.get('preco')
+    if not nome or preco is None:
+        return jsonify({'erro': 'Dados inválidos'}), 400
+    model.salvar_novo_produto(nome, preco)
+    return jsonify({'sucesso': True})
+
+@app.route('/api/produtos/<int:id_produto>', methods=['DELETE'])
+def api_deletar_produto(id_produto):
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    model.excluir_produto_id(id_produto)
+    return jsonify({'sucesso': True})
+
+
+# --- ROTAS DA API: COMANDAS ---
+
+@app.route('/api/comandas', methods=['GET'])
+def api_listar_comandas():
+    return jsonify(model.obter_todas_comandas())
+
+@app.route('/api/comandas', methods=['POST'])
+def api_salvar_comanda():
+    dados = request.json
+    mesa = dados.get('numero_mesa', '').strip()
+    itens = dados.get('itens_json', '{}')
+    total = dados.get('total', 0.0)
+    obs = dados.get('observacoes', '')
+    if not mesa:
+        return jsonify({'erro': 'Mesa não informada'}), 400
+    model.salvar_ou_atualizar_comanda(mesa, itens, total, obs)
+    return jsonify({'sucesso': True})
+
+@app.route('/api/comandas/<string:mesa>', methods=['DELETE'])
+def api_fechar_comanda(mesa):
+    model.deletar_comanda_paga(mesa)
+    return jsonify({'sucesso': True})
+
+
+# --- ROTAS DA API: GESTÃO DE USUÁRIOS ---
+
+@app.route('/api/usuarios', methods=['GET'])
+def api_listar_usuarios():
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    return jsonify(model.obter_todos_usuarios())
+
+@app.route('/api/usuarios', methods=['POST'])
+def api_cadastrar_usuario():
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    dados = request.json
+    usuario = dados.get('usuario', '').strip()
+    senha = dados.get('senha', '').strip()
+    nome = dados.get('nome_completo', '').strip()
+    
+    if not usuario or not senha or not nome:
+        return jsonify({'erro': 'Preencha todos os campos'}), 400
+        
+    # CORREÇÃO DA VARIÁVEL: Alinhado 'criou' com o teste do 'if' de forma idêntica
+    criou = model.salvar_novo_usuario(usuario, senha, nome)
+    if criou:
+        return jsonify({'sucesso': True})
+    return jsonify({'erro': 'Este nome de usuário já existe'}), 400
+
+
+@app.route('/api/usuarios/<int:id_usuario>', methods=['PUT'])
+def api_alterar_usuario(id_usuario):
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    dados = request.json
+    usuario = dados.get('usuario', '').strip()
+    senha = dados.get('senha', '').strip()
+    nome = dados.get('nome_completo', '').strip()
+    
+    if not usuario or not nome:
+        return jsonify({'erro': 'Campos obrigatórios vazios'}), 400
+        
+    model.alterar_usuario_bd(id_usuario, usuario, senha, nome)
+    return jsonify({'sucesso': True})
+
+@app.route('/api/usuarios/<int:id_usuario>', methods=['DELETE'])
+def api_deletar_usuario(id_usuario):
+    if 'user_id' not in session:
+        return jsonify({'erro': 'Não autorizado'}), 401
+    model.excluir_usuario_id(id_usuario)
+    return jsonify({'sucesso': True})
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
+
