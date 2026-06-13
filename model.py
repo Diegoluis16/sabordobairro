@@ -1,6 +1,7 @@
 import sqlite3
 
-DATABASE = ':memory:'
+# SOLUÇÃO DE HOSPEDAGEM GRATUITA: Grava o arquivo físico na pasta /tmp/ liberada pelo Linux do Render
+DATABASE = '/tmp/sabor_bairro_mvc.db'
 
 def conectar_bd():
     conn = sqlite3.connect(DATABASE)
