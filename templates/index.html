@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sabor do Bairro - PDV Touch</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --danger: #e74c3c; --success: #2ecc71;
+            --bg-light: #ecf0f1; --gray-dark: #34495e; --warning: #f1c40f;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+        body { display: flex; flex-direction: column; height: 100vh; background-color: var(--primary); overflow: hidden; }
+        
+        header { background-color: #cc0000; display: flex; padding: 0 10px; min-height: 50px; justify-content: space-between; align-items: center; }
+        .bloco-abas { display: flex; }
+        .tab-btn { background: none; border: none; color: white; padding: 15px 15px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .tab-btn.active { background-color: var(--bg-light); color: var(--primary); }
+        .user-info { color: white; font-size: 13px; font-weight: bold; padding-right: 15px; display: flex; gap: 15px; align-items: center; }
+        .btn-logout { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .container { display: flex; flex: 1; overflow: hidden; background-color: var(--bg-light); }
+        .catalogo { flex: 1; padding: 15px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; align-content: start; }
+        .product-btn { background-color: var(--gray-dark); color: white; border: none; border-radius: 6px; padding: 15px 10px; font-weight: bold; font-size: 14px; cursor: pointer; min-height: 80px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); -webkit-tap-highlight-color: transparent; }
+        .product-btn:active { background-color: #1a252f; }
+
+        .painel-caixa { width: 380px; background-color: #dcdde1; border-left: 2px solid #bdc3c7; display: flex; flex-direction: column; padding: 15px; }
+        .painel-caixa h2, .container-gestao h2 { font-size: 18px; text-align: center; color: var(--primary); margin-bottom: 10px; font-weight: bold; }
+        
+        .mesa-box { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; background: #fff; padding: 6px; border-radius: 4px; border: 1px solid #ccc; }
+        .mesa-box label { font-size: 12px; font-weight: bold; color: var(--primary); }
+        .mesa-box input { width: 60px; padding: 4px; font-weight: bold; text-align: center; }
+        .btn-comanda { background: var(--warning); color: #222; font-weight: bold; border: none; padding: 6px 10px; cursor: pointer; border-radius: 4px; font-size: 11px; }
+
+        .carrinho-lista { flex: 1; background: white; border-radius: 4px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #bdc3c7; min-height: 100px; display: block; }
+        .item-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; align-items: center; width: 100%; background: #fff; color: #333; }
+        
+        .bloco-totais { background-color: var(--primary); color: white; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .total-val { font-size: 24px; color: var(--success); font-weight: bold; }
+        .pagamentos { display: flex; gap: 5px; margin-bottom: 10px; }
+        .pag-btn { flex: 1; padding: 10px; font-weight: bold; border: 1px solid #bdc3c7; background: #eee; cursor: pointer; border-radius: 4px; font-size: 14px; -webkit-tap-highlight-color: transparent; }
+        .pag-btn.active { background-color: var(--primary); color: white; }
+
+        .troco-box { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
+        .troco-box input { width: 90px; padding: 5px; font-size: 16px; text-align: center; font-weight: bold; border: 1px solid #ccc; }
+        .teclado { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+        .key { background: white; border: 1px solid #bdc3c7; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; text-align: center; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .key:active { background: #eee; }
+        .key.clear { background: var(--danger); color: white; }
+
+        .btn-finalizar { background-color: var(--success); color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 3px 0 #27ae60; -webkit-tap-highlight-color: transparent; }
+        .btn-cancelar { background-color: var(--danger); color: white; border: none; width: 100%; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 4px; -webkit-tap-highlight-color: transparent; }
+        
+        /* CORREÇÃO DO LAYOUT DAS ABAS DE GESTÃO (Força a exibição vertical no fundo correto) */
+        .container-gestao { padding: 25px; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 800px; margin: 0 auto; overflow-y: auto; }
+        .hidden { display: none !important; }
+        
+        .painel-mesas-ativas { background: #2c3e50; padding: 10px; color: white; display: flex; gap: 8px; overflow-x: auto; min-height: 55px; align-items: center; border-top: 2px solid #1a252f; }
+        .mesa-btn-ativa { background: var(--warning); color: black; font-weight: bold; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:999; }
+        .modal-cupom { background: white; padding: 20px; border-radius: 8px; width: 340px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .cupom-texto { background: #fcfcfc; border: 1px dashed #7f8c8d; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; white-space: pre; overflow-y: auto; max-height: 350px; margin-bottom: 15px; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; overflow-y: auto; }
+            .catalogo { order: 1; grid-template-columns: repeat(2, 1fr); overflow-y: visible; padding: 10px; }
+            .painel-caixa { order: 2; width: 100%; border-left: none; border-top: 2px solid #bdc3c7; padding: 10px; overflow-y: visible; }
+            body { overflow: auto; height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="bloco-abas">
+            <button id="tab-caixa-btn" class="tab-btn active" onclick="mudarAba('caixa')">CAIXA (MESAS)</button>
+            <button id="tab-cadastro-btn" class="tab-btn" onclick="mudarAba('cadastro')">PRODUTOS</button>
+            <button id="tab-usuarios-btn" class="tab-btn" onclick="mudarAba('usuarios')">USUÁRIOS</button>
+        </div>
+        <div class="user-info">
+            <span>👤 {{ usuario_nome }}</span>
+            <button class="btn-logout" onclick="location.href='/logout'">Sair</button>
+        </div>
+    </header>
+    <!-- ABA 1: CAIXA (JÁ ESTÁ PRONTA NO SEU ARQUIVO, DEIXE IGUAL) -->
+    <div id="aba-caixa" class="container" style="flex-direction: column;">
+        <div style="display: flex; flex: 1; overflow: hidden; width: 100%;">
+            <div class="catalogo" id="grid-produtos"></div>
+            
+            <div class="painel-caixa">
+                <h2>ITENS DO PEDIDO</h2>
+                <div class="mesa-box">
+                    <label>MESA / COMANDA:</label>
+                    <input type="text" id="input-mesa" placeholder="00">
+                    <button class="btn-comanda" onclick="lancarPedidoNaMesaBD()">LANÇAR NA MESA</button>
+                </div>
+                <div class="carrinho-lista" id="carrinho-itens"></div>
+                <div class="bloco-totais"><span>TOTAL:</span><span class="total-val" id="total-venda">R$ 0,00</span></div>
+                <div class="pagamentos">
+                    <button class="pag-btn active" id="btn-dinheiro" onclick="setPagamento('dinheiro')">Dinheiro</button>
+                    <button class="pag-btn" id="btn-cartao" onclick="setPagamento('cartao')">Cartão</button>
+                    <button class="pag-btn" id="btn-pix" onclick="setPagamento('pix')">Pix</button>
+                </div>
+                <div class="troco-box">
+                    <label>Recebido R$:</label>
+                    <input type="text" id="input-recebido" readonly value="">
+                    <div>Troco: <span class="troco-text" id="txt-troco">R$ 0,00</span></div>
+                </div>
+                <div class="teclado">
+                    <div class="key" onclick="pressKey('7')">7</div><div class="key" onclick="pressKey('8')">8</div><div class="key" onclick="pressKey('9')">9</div>
+                    <div class="key" onclick="pressKey('4')">4</div><div class="key" onclick="pressKey('5')">5</div><div class="key" onclick="pressKey('6')">6</div>
+                    <div class="key" onclick="pressKey('1')">1</div><div class="key" onclick="pressKey('2')">2</div><div class="key" onclick="pressKey('3')">3</div>
+                    <div class="key" onclick="pressKey('0')">0</div><div class="key" onclick="pressKey('.')">.</div><div class="key clear" onclick="pressKey('C')">C</div>
+                </div>
+                <button class="btn-finalizar" onclick="finalizarVenda()">FINALIZAR E PAGAR</button>
+                <button class="btn-cancelar" onclick="limparCarrinho()">Cancelar Cupom</button>
+            </div>
+        </div>
+        <div class="painel-mesas-ativas"><span style="font-size:12px; font-weight:bold; margin-right:5px;">MESAS ATIVAS:</span><div id="lista-mesas-ativas" style="display:flex; gap:6px;"></div></div>
+    </div>
+
+    <!-- ABA 2: GERENCIAR CARDÁPIO -->
+    <div id="aba-cadastro" class="container hidden" style="background-color: #ecf0f1; width: 100%; height: 100%;">
+        <div class="container-gestao" style="display: flex; flex-direction: column; width: 100%; padding: 20px;">
+            <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 15px; font-weight: bold; text-align: left;">Gerenciar Cardápio</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; display: flex; gap: 10px; border: 1px solid #ccc; align-items: center; width: 100%;">
+                <input type="text" id="cad-nome" placeholder="Nome do Produto" style="padding: 10px; flex: 1; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                <input type="number" id="cad-preco" placeholder="Preço" style="padding: 10px; width: 120px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                <button class="btn-finalizar" style="width: auto; padding: 10px 20px; box-shadow: none;" onclick="cadastrarNovoProdutoBD()">Adicionar</button>
+            </div>
+            <div class="carrinho-lista" id="lista-produtos-cadastrados" style="background: white; margin-top: 15px; border: 1px solid #bdc3c7; border-radius: 4px; min-height: 200px;"></div>
+        </div>
+    </div>
+
+    <!-- ABA 3: GERENCIAR USUÁRIOS -->
+    <div id="aba-usuarios" class="container hidden" style="background-color: #ecf0f1; width: 100%; height: 100%;">
+        <div class="container-gestao" style="display: flex; flex-direction: column; width: 100%; padding: 20px;">
+            <h2 style="color: #2c3e50; font-size: 18px; margin-bottom: 15px; font-weight: bold; text-align: left;">Gerenciar Usuários / Funcionários</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; border: 1px solid #ccc; align-items: center; width: 100%;">
+                <input type="text" id="user-nome-completo" placeholder="Nome Completo do Funcionário" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                <input type="text" id="user-login" placeholder="Nome de Login (Usuário)" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                <input type="password" id="user-senha" placeholder="Senha de Acesso" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                <button class="btn-finalizar" style="width: auto; padding: 10px 20px; box-shadow: none;" onclick="cadastrarNovoUsuarioBD()">Cadastrar</button>
+            </div>
+            <div class="carrinho-lista" id="lista-usuarios-cadastrados" style="background: white; margin-top: 15px; border: 1px solid #bdc3c7; border-radius: 4px; min-height: 200px;"></div>
+        </div>
+    </div>
+
+<script>
+
+var carrinho = {}; var formaPagamento = "dinheiro"; var infoDeliveryGlobal = "";        
+
+function carregarProdutosDoServidor() {
+            fetch("/api/produtos?refresh=" + Math.random())
+                .then(function(res) { return res.json(); })
+                .then(function(lista) {
+                    // 1. Atualiza os botões cinzas do Caixa Principal
+                    var grid = document.getElementById("grid-produtos"); 
+                    if (grid) {
+                        grid.innerHTML = "";
+                        for (var i = 0; i < lista.length; i++) { 
+                            var p = lista[i]; 
+                            var btn = document.createElement("button");
+                            btn.setAttribute("class", "product-btn");
+                            btn.innerHTML = p.nome + "<br>R$ " + parseFloat(p.preco).toFixed(2);
+                            btn.onclick = (function(nome, preco) {
+                                return function() { adicionarAoCarrinho(nome, preco); };
+                            })(p.nome, p.preco);
+                            grid.appendChild(btn);
+                        }
+                    }
+                    
+                    // 2. Atualiza a lista branca de exclusão na aba PRODUTOS
+                    var listaCad = document.getElementById("lista-produtos-cadastrados"); 
+                    if (!listaCad) return; 
+                    listaCad.innerHTML = "";
+                    
+                    for (var j = 0; j < lista.length; j++) { 
+                        var prod = lista[j]; 
+                        var linhaDiv = document.createElement("div");
+                        linhaDiv.setAttribute("class", "item-row");
+                        
+                        // Cria o texto do lanche
+                        var texto = document.createElement("span");
+                        texto.innerHTML = prod.nome + " - <b>R$ " + parseFloat(prod.preco).toFixed(2) + "</b>";
+                        
+                        // Cria o botão vermelho de remover
+                        var btnRemover = document.createElement("button");
+                        btnRemover.setAttribute("style", "color:var(--danger); background:none; border:none; cursor:pointer; font-weight:bold; padding: 5px 10px;");
+                        btnRemover.innerText = "Remover";
+                        btnRemover.onclick = (function(id) {
+                            return function() { deletarProdutoDoBD(id); };
+                        })(prod.id);
+                        
+                        linhaDiv.appendChild(texto);
+                        linhaDiv.appendChild(btnRemover);
+                        listaCad.appendChild(linhaDiv);
+                    }
+                });
+        }
+function buscarComandasAtivas() {fetch("/api/comandas?refresh=" + Math.random()).then(function(res) { return res.json(); }).then(function(mesas) {var painel = document.getElementById("lista-mesas-ativas"); if (!painel) return; painel.innerHTML = "";if(mesas.length === 0) { painel.innerHTML = 'Nenhuma mesa aberta'; return; }for(var i=0; i<mesas.length; i++) { var m = mesas[i]; var btn = document.createElement("button"); btn.className = "mesa-btn-ativa"; btn.innerText = m.numero_mesa + " (R$ " + m.total.toFixed(2) + ")"; btn.onclick = (function(mesa, itens, obs) { return function() { puxarMesaParaOCaixa(mesa, itens, obs); }; })(m.numero_mesa, m.itens_json, m.observacoes); painel.appendChild(btn); }});}
+
+function carregarUsuariosDoServidor() {
+            fetch("/api/usuarios?refresh=" + Math.random())
+                .then(function(res) { return res.json(); })
+                .then(function(lista) {
+                    var listaCad = document.getElementById("lista-usuarios-cadastrados"); 
+                    if (!listaCad) return; 
+                    listaCad.innerHTML = "";
+                    
+                    for (var i = 0; i < lista.length; i++) { 
+                        var u = lista[i]; 
+                        var linhaDiv = document.createElement("div");
+                        linhaDiv.setAttribute("class", "item-row");
+                        
+                        var texto = document.createElement("span");
+                        texto.innerHTML = "<b>" + u.nome_completo + "</b> (Login: " + u.usuario + ")";
+                        linhaDiv.appendChild(texto);
+                        
+                        if (u.usuario !== 'admin') {
+                            var btnExcluir = document.createElement("button");
+                            btnExcluir.setAttribute("style", "color:var(--danger); background:none; border:none; cursor:pointer; font-weight:bold; padding: 5px 10px;");
+                            btnExcluir.innerText = "Excluir";
+                            btnExcluir.onclick = (function(id) {
+                                return function() { deletarUsuarioDoBD(id); };
+                            })(u.id);
+                            linhaDiv.appendChild(btnExcluir);
+                        } else {
+                            var txtBloqueado = document.createElement("span");
+                            txtBloqueado.setAttribute("style", "color:gray; font-size:12px; font-weight:bold; padding: 5px 10px;");
+                            txtBloqueado.innerText = "Bloqueado";
+                            linhaDiv.appendChild(txtBloqueado);
+                        }
+                        
+                        listaCad.appendChild(linhaDiv);
+                    }
+                });
+        }
+
+                function cadastrarNovoUsuarioBD() {
+            var nome = document.getElementById("user-nome-completo").value.trim();
+            var login = document.getElementById("user-login").value.trim();
+            var senha = document.getElementById("user-senha").value.trim();
+            
+            if(!nome || !login || !senha) { 
+                alert("Por favor, preencha todos os campos!"); 
+                return; 
+            }
+
+            fetch("/api/usuarios", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ usuario: login, senha: senha, nome_completo: nome })
+            })
+            .then(function(res) {
+                // SÓ AVANÇA SE O PYTHON RESPONDER COM SUCESSO (STATUS 200)
+                if (res.ok) {
+                    document.getElementById("user-nome-completo").value = "";
+                    document.getElementById("user-login").value = "";
+                    document.getElementById("user-senha").value = "";
+                    
+                    // Pequeno intervalo seguro de 100ms para o SQLite fixar o arquivo no Windows
+                    setTimeout(function() {
+                        carregarUsuariosDoServidor();
+                    }, 100);
+                } else {
+                    alert("Este nome de usuário já existe no sistema!");
+                }
+            });
+        }
+
+
+
+function deletarUsuarioDoBD(id) { if(!confirm("Deseja realmente remover este funcionário?")) return; fetch("/api/usuarios/" + id, { method: "DELETE" }).then(function() { carregarUsuariosDoServidor(); }); }function lancarPedidoNaMesaBD() { var mesaNum = document.getElementById("input-mesa").value.trim(); if(!mesaNum) { alert("Digite o número da mesa!"); return; } if (Object.keys(carrinho).length === 0) { alert("Adicione itens!"); return; } fetch("/api/comandas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ numero_mesa: mesaNum, itens_json: JSON.stringify(carrinho), total: obterTotalVenda(), observacoes: infoDeliveryGlobal }) }).then(function() { alert("Pedido lançado!"); limparCarrinho(); buscarComandasAtivas(); }); }function puxarMesaParaOCaixa(numero_mesa, itens_json, observacoes) { document.getElementById("input-mesa").value = numero_mesa; carrinho = JSON.parse(itens_json); infoDeliveryGlobal = observacoes || ""; atualizarVisualCaixa(); if(observacoes && observacoes.trim() !== "") { alert("Dados de entrega:\n" + observacoes); } }function cadastrarNovoProdutoBD() { var nome = document.getElementById("cad-nome").value.trim(); var preco = parseFloat(document.getElementById("cad-preco").value); if (!nome || isNaN(preco)) { alert("Campos incorretos!"); return; } fetch("/api/produtos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: nome, preco: preco }) }).then(function() { document.getElementById("cad-nome").value = ""; document.getElementById("cad-preco").value = ""; carregarProdutosDoServidor(); }); }function deletarProdutoDoBD(id) { if(!confirm("Remover produto?")) return; fetch("/api/produtos/" + id, { method: "DELETE" }).then(function() { carregarProdutosDoServidor(); }); }function adicionarAoCarrinho(nome, preco) { if (carrinho[nome]) { carrinho[nome].qtd++; } else { carrinho[nome] = { "preco": preco, "qtd": 1 }; } atualizarVisualCaixa(); }function obterTotalVenda() { var total = 0; for (var id in carrinho) { if (carrinho.hasOwnProperty(id)) { total += carrinho[id].qtd * carrinho[id].preco; } } return total; }function atualizarVisualCaixa() { var container = document.getElementById("carrinho-itens"); if (!container) return; container.innerHTML = ""; for (var nome in carrinho) { if (carrinho.hasOwnProperty(nome)) { var d = carrinho[nome]; container.innerHTML += '' + d.qtd + 'x ' + nome + 'R$ ' + (d.qtd * d.preco).toFixed(2) + ''; } } document.getElementById("total-venda").innerText = "R$ " + obterTotalVenda().toFixed(2); calcularTroco(); }function setPagamento(forma) { formaPagamento = forma; var botoes = document.querySelectorAll(".pag-btn"); for(var i=0; i<botoes.length; i++) { botoes[i].classList.remove("active"); } if (document.getElementById("btn-" + forma)) document.getElementById("btn-" + forma).classList.add("active"); var inputRec = document.getElementById("input-recebido"); if (!inputRec) return; if(forma !== "dinheiro") { inputRec.value = ""; } calcularTroco(); }function pressKey(char) { if (formaPagamento !== "dinheiro") return; var input = document.getElementById("input-recebido"); if (!input) return; if (char === "C") { input.value = ""; } else if (char === ".") { if (input.value.indexOf(".") === -1) input.value += "."; } else { input.value += char; } calcularTroco(); }function calcularTroco() { var total = obterTotalVenda(); var inputRec = document.getElementById("input-recebido"); var recebido = inputRec ? (parseFloat(inputRec.value) || 0) : 0; var troco = recebido - total; var txtTroco = document.getElementById("txt-troco"); if (!txtTroco) return; if (recebido === 0) { txtTroco.innerText = "R$ 0,00"; } else if (troco >= 0) { txtTroco.innerText = "R$ " + troco.toFixed(2); } else { txtTroco.innerText = "Insuficiente"; } }function limparCarrinho() { carrinho = {}; infoDeliveryGlobal = ""; document.getElementById("input-mesa").value = ""; if(document.getElementById("input-recebido")) document.getElementById("input-recebido").value = ""; atualizarVisualCaixa(); }function gerarCupomTexto() { var d = new Date(); var mesaNum = document.getElementById("input-mesa").value.trim() || "Balcao"; var txt = "================================\n        SABOR DO BAIRRO         \n================================\nREF: " + mesaNum + "\n--------------------------------\n"; for (var nome in carrinho) { if (carrinho.hasOwnProperty(nome)) { txt += carrinho[nome].qtd + "x  " + (nome + "           ").substring(0,15) + " R$ " + (carrinho[nome].qtd * carrinho[nome].preco).toFixed(2) + "\n"; } } txt += "--------------------------------\nTOTAL: R$ " + obterTotalVenda().toFixed(2) + "\nPAG: " + formaPagamento.toUpperCase() + "\n"; if(infoDeliveryGlobal) txt += "OBS: " + infoDeliveryGlobal + "\n"; return txt + "================================\n"; }function finalizarVenda() { if (Object.keys(carrinho).length === 0) { alert("Carrinho vazio!"); return; } var mesaNum = document.getElementById("input-mesa").value.trim(); if(mesaNum) { fetch("/api/comandas/" + mesaNum, { method: "DELETE" }).then(function() { buscarComandasAtivas(); }); } document.getElementById("texto-cupom-fiscal").innerText = generarCupomTexto(); document.getElementById("overlay-cupom").style.display = "flex"; }function fecharJanelaCupom() { document.getElementById("overlay-cupom").style.display = "none"; limparCarrinho(); }function mudarAba(aba) {var cx = document.getElementById("aba-caixa"); var cd = document.getElementById("aba-cadastro"); var us = document.getElementById("aba-usuarios"); var bCx = document.getElementById("tab-caixa-btn"); var bCd = document.getElementById("tab-cadastro-btn"); var bUs = document.getElementById("tab-usuarios-btn");if(cx) cx.classList.add("hidden"); if(cd) cd.classList.add("hidden"); if(us) us.classList.add("hidden"); if(bCx) bCx.classList.remove("active"); if(bCd) bCd.classList.remove("active"); if(bUs) bUs.classList.remove("active");if(aba === "caixa") { if(cx) cx.classList.remove("hidden"); if(bCx) bCx.classList.add("active"); }else if(aba === "cadastro") { if(cd) cd.classList.remove("hidden"); if(bCd) bCd.classList.add("active"); carregarProdutosDoServidor(); }else { if(us) us.classList.remove("hidden"); if(bUs) bUs.classList.add("active"); carregarUsuariosDoServidor(); }}carregarProdutosDoServidor(); buscarComandasAtivas();
+</script>
