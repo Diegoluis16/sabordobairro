@@ -35,12 +35,7 @@ def login():
 
         if not usuario or not senha:
             return "<h3>Usuário e senha são obrigatórios! <a href='/login'>Tentar novamente</a></h3>", 400
-            
-        usuario = request.form.get('txt_usuario', '').strip()
-        senha = request.form.get('txt_senha', '').strip()
-
-        if not usuario or not senha:
-            return "<h3>Usuário e senha são obrigatórios! <a href='/login'>Tentar novamente</a></h3>", 400
+    
 
         usuario_logado = model.verificar_credenciais(usuario, senha)
 
