@@ -1,6 +1,7 @@
 import sqlite3
 
-DATABASE = 'sabor_bairro_mvc.db'
+# CORREÇÃO DE HOSPEDAGEM: Utiliza a memória RAM para contornar o bloqueio de gravação do Render
+DATABASE = ':memory:'
 
 def conectar_bd():
     conn = sqlite3.connect(DATABASE)
