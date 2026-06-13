@@ -13,56 +13,60 @@ def init_db():
     conn = conectar_bd()
     cursor = conn.cursor()
     
-    # 1. Tabela de Cardápio/Produtos
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS produtos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL UNIQUE,
-            preco REAL NOT NULL
-        )
-    ''')
-    
-    # 2. Tabela de Comandas / Mesas / Delivery
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS comandas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            numero_mesa TEXT NOT NULL UNIQUE,
-            itens_json TEXT NOT NULL,
-            total REAL NOT NULL DEFAULT 0.0,
-            observacoes TEXT DEFAULT ''
-        )
-    ''')
-    
-    # 3. Tabela de Usuários do Sistema
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT NOT NULL UNIQUE,
-            senha TEXT NOT NULL,
-            nome_completo TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-
-    # Garante a inserção dos produtos iniciais se estiver zerado
-    cursor.execute('SELECT COUNT(*) FROM produtos')
-    if cursor.fetchone()[0] == 0:
-        produtos_iniciais = [
-            ("X-Burger", 18.50), ("X-Salada", 20.00),
-            ("Batata Frita", 12.00), ("Refrigerante Lata", 6.00),
-            ("Suco Natural", 8.50)
-        ]
-        cursor.executemany('INSERT INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
-    
-    # Garante a inserção do Administrador padrão se estiver zerado
-    cursor.execute('SELECT COUNT(*) FROM usuarios')
-    if cursor.fetchone()[0] == 0:
-        cursor.execute('INSERT INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
+    try:
+        # 1. Tabela de Cardápio/Produtos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produtos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL UNIQUE,
+                preco REAL NOT NULL
+            )
+        ''')
         
-    conn.commit()
-    conn.close()
+        # 2. Tabela de Comandas / Mesas / Delivery
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS comandas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero_mesa TEXT NOT NULL UNIQUE,
+                itens_json TEXT NOT NULL,
+                total REAL NOT NULL DEFAULT 0.0,
+                observacoes TEXT DEFAULT ''
+            )
+        ''')
+        
+        # 3. Tabela de Usuários do Sistema
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT NOT NULL UNIQUE,
+                senha TEXT NOT NULL,
+                nome_completo TEXT NOT NULL
+            )
+        ''')
+        conn.commit()
 
-init_db()
+        # Garante a inserção dos produtos iniciais se estiver zerado
+        cursor.execute('SELECT COUNT(*) FROM produtos')
+        if cursor.fetchone()[0] == 0:
+            produtos_iniciais = [
+                ("X-Burger", 18.50), ("X-Salada", 20.00),
+                ("Batata Frita", 12.00), ("Refrigerante Lata", 6.00),
+                ("Suco Natural", 8.50)
+            ]
+            cursor.executemany('INSERT OR IGNORE INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
+        
+        # Garante a inserção do Administrador padrão se estiver zerado
+        cursor.execute('SELECT COUNT(*) FROM usuarios')
+        if cursor.fetchone()[0] == 0:
+            cursor.execute('INSERT OR IGNORE INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
+            
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Se outra instância do Gunicorn já criou, apenas ignora o erro com segurança
+        pass
+    finally:
+        conn.close()
+
 
 # --- FUNÇÕES DE USUÁRIOS ---
 
