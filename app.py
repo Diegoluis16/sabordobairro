@@ -2,7 +2,9 @@ import time
 from flask import Flask, jsonify, render_template, request, redirect, session
 import model  # Importa o nosso Model do MVC
 
-app = Flask(__name__)
+# Executa a criação do banco de dados na RAM na inicialização do servidor
+model.init_db()
+
 
 # CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
 app.secret_key = 'sabor_do_bairro_chave_ultra_secreta_123'
