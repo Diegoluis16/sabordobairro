@@ -162,3 +162,5 @@ def deletar_comanda_paga(mesa):
     conn.commit()
     conn.close()
 
+init_db()
+
