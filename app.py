@@ -1,50 +1,47 @@
 import time
-from flask import Flask, jsonify, render_template, request, redirect, session
-import model  # Importa o nosso Model do MVC
+
+from flask import Flask, request, render_template, redirect, url_for, flash, session
+import model  # Certifique-se que este arquivo existe e está no mesmo diretório
 
 app = Flask(__name__)
-
-# CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
-# CORREÇÃO CRÍTICA DE PRODUÇÃO: Gera uma chave de criptografia de bytes aceita pelo Linux do Render
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-
-
-# GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
-@app.before_request
-def inicializar_banco_na_nuvem():
-    # Executa apenas uma vez para criar as tabelas no PostgreSQL sem conflito
-    if not hasattr(app, 'banco_inicializado'):
-        model.init_db()
-        app.banco_inicializado = True
-
-
-# --- CONFIGURAÇÃO ANTI-CACHE ---
-@app.after_request
-def add_header(response):
-    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
-
-# --- ROTAS DE LOGIN E SESSÃO (CONTROLLER) ---
+app.secret_key = "chave_secreta_segura"
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        usuario = request.form.get('txt_usuario', '').strip()
-        senha = request.form.get('txt_senha', '').strip()
-        
-        usuario_logado = model.verificar_credenciais(usuario, senha)
-        
-        if usuario_logado:
-            session['user_id'] = usuario_logado['id']
-            session['user_login'] = usuario_logado['usuario']
-            session['user_nome'] = usuario_logado['nome_completo']
-            return redirect('/')
-        else:
-            return render_template('login.html', erro='Usuário ou senha incorretos!')
-            
-    return render_template('login.html')
+    try:
+        if request.method == 'POST':
+            usuario = request.form.get('txt_usuario', '').strip()
+            senha = request.form.get('txt_senha', '').strip()
+
+            if not usuario or not senha:
+                flash("Usuário e senha são obrigatórios.", "erro")
+                return redirect(url_for('login'))
+
+            if model.verificar_credenciais(usuario, senha):
+                session['usuario'] = usuario
+                flash("Login realizado com sucesso!", "sucesso")
+                return redirect(url_for('dashboard'))
+            else:
+                flash("Usuário ou senha inválidos.", "erro")
+                return redirect(url_for('login'))
+
+        # Se for GET, apenas renderiza o formulário
+        return render_template('login.html')
+
+    except Exception as e:
+        print(f"Erro no login: {e}")
+        flash("Erro interno no servidor.", "erro")
+        return redirect(url_for('login'))
+
+@app.route('/dashboard')
+def dashboard():
+    if 'usuario' not in session:
+        flash("Você precisa estar logado para acessar esta página.", "erro")
+        return redirect(url_for('login'))
+    return f"Bem-vindo, {session['usuario']}!"
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 @app.route('/logout')
 def logout():
