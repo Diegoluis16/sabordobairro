@@ -25,6 +25,7 @@ def inicializar_banco_na_nuvem():
         app.banco_inicializado = True
 
 # NOVA ESTRUTURA BLINDADA: Injeta a tela de login como texto direto para evitar o erro de leitura do template
+# NOVA ESTRUTURA BLINDADA: Injeta a tela de login como texto direto para evitar o erro de leitura do template
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -34,22 +35,15 @@ def login():
         if not usuario or not senha:
             return "<h3>Usuário e senha são obrigatórios! <a href='/login'>Tentar novamente</a></h3>", 400
 
-        # Tenta validar pelo banco de dados primeiro
-        try:
-            model.init_db()
-            usuario_logado = model.verificar_credenciais(usuario, senha)
-        except Exception:
-            usuario_logado = None
+        usuario_logado = model.verificar_credenciais(usuario, senha)
 
-        # ACESSO BLINDADO: Se for o admin padrão, libera o acesso mesmo se o banco do Linux travar a gravação
-        if usuario_logado or (usuario == 'admin' and senha == 'admin'):
-            session['user_id'] = 1
-            session['user_login'] = 'admin'
-            session['user_nome'] = 'Administrador Principal'
+        if usuario_logado:
+            session['user_id'] = usuario_logado['id']
+            session['user_login'] = usuario_logado['usuario']
+            session['user_nome'] = usuario_logado['nome_completo']
             return redirect('/')
         else:
             return "<h3>Usuário ou senha incorretos! <a href='/login'>Tentar novamente</a></h3>", 401
-
 
     # MÉTODO GET SEGURO: Entrega o formulário sem precisar ler a pasta do servidor
     html_login = '''
@@ -90,6 +84,7 @@ def login():
     </html>
     '''
     return html_login
+
 
 
 @app.route('/logout')
