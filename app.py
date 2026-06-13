@@ -28,14 +28,15 @@ def inicializar_banco_na_nuvem():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-         model.init_db()
+        # GARANTIA DE ACESSO: Força o banco a criar as tabelas e o usuário admin caso o Linux tenha limpado a pasta /tmp
+        model.init_db()
 
         usuario = request.form.get('txt_usuario', '').strip()
         senha = request.form.get('txt_senha', '').strip()
 
         if not usuario or not senha:
             return "<h3>Usuário e senha são obrigatórios! <a href='/login'>Tentar novamente</a></h3>", 400
-    
+
 
         usuario_logado = model.verificar_credenciais(usuario, senha)
 
