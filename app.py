@@ -1,10 +1,19 @@
 import time
 from flask import Flask, jsonify, render_template, request, redirect, session
 import model  # Importa o nosso Model do MVC
+
 app = Flask(__name__)
 
 # CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
 app.secret_key = 'sabor_do_bairro_chave_ultra_secreta_123'
+
+# GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
+@app.before_request
+def inicializar_banco_na_nuvem():
+    # Executa apenas uma vez para criar as tabelas no PostgreSQL sem conflito
+    if not hasattr(app, 'banco_inicializado'):
+        model.init_db()
+        app.banco_inicializado = True
 
 
 # --- CONFIGURAÇÃO ANTI-CACHE ---
@@ -169,7 +178,6 @@ def api_deletar_usuario(id_usuario):
         return jsonify({'erro': 'Não autorizado'}), 401
     model.excluir_usuario_id(id_usuario)
     return jsonify({'sucesso': True})
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
