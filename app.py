@@ -3,10 +3,6 @@ from flask import Flask, jsonify, render_template, request, redirect, session
 import model  # Importa o nosso Model do MVC
 app = Flask(__name__)
 
-# Gatilho executado de forma segura na inicialização do servidor web
-with app.app_context():
-    model.init_db()
-
 # CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
 app.secret_key = 'sabor_do_bairro_chave_ultra_secreta_123'
 
