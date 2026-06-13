@@ -3,11 +3,10 @@ import time
 from flask import Flask, jsonify, render_template, request, redirect, session
 import model
 
-# CONFIGURAÇÃO DE TRADUÇÃO: Avisa o Flask para ler a pasta visual com o nome 'modelos'
+# Inicializa o Flask mapeando a pasta 'modelos' trazida pelo Windows
 app = Flask(__name__, template_folder='modelos')
 
-
-# Chave de segurança em bytes nativos exigida para sessões em servidores Linux (Render)
+# Chave de segurança estável aceita pelo Gunicorn do Render
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 # --- CONFIGURAÇÃO ANTI-CACHE ---
@@ -18,7 +17,12 @@ def add_header(response):
     response.headers['Expires'] = '0'
     return response
 
-
+# GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
+@app.before_request
+def inicializar_banco_na_nuvem():
+    if not hasattr(app, 'banco_inicializado'):
+        model.init_db()
+        app.banco_inicializado = True
 
 # --- ROTAS DE LOGIN E SESSÃO ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -140,8 +144,7 @@ def api_deletar_usuario(id_usuario):
     return jsonify({'sucesso': True})
 
 if __name__ == '__main__':
-    # Inicializa o banco físico na pasta /tmp do Linux uma única vez ao ligar
-    model.init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
