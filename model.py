@@ -1,11 +1,10 @@
 import sqlite3
 
-# Utiliza a pasta /tmp que é o único local com permissão nativa de escrita na nuvem do Render
 DATABASE = '/tmp/sabor_bairro_mvc.db'
 
 def conectar_bd():
     conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    conn.row_factory = sqlite3.Row  # ATIVAÇÃO CRUCIAL: Garante que r['id'] funcione na nuvem
     return conn
 
 def init_db():
@@ -17,16 +16,17 @@ def init_db():
     conn.commit()
 
     cursor.execute('SELECT COUNT(*) FROM produtos')
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone() == 0:
         produtos_iniciais = [("X-Burger", 18.50), ("X-Salada", 20.00), ("Batata Frita", 12.00), ("Refrigerante Lata", 6.00), ("Suco Natural", 8.50)]
-        cursor.executemany('INSERT OR IGNORE INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
+        cursor.executemany('INSERT INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
     
     cursor.execute('SELECT COUNT(*) FROM usuarios')
-    if cursor.fetchone()[0] == 0:
-        cursor.execute('INSERT OR IGNORE INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
+    if cursor.fetchone() == 0:
+        cursor.execute('INSERT INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
     conn.commit()
     conn.close()
 
+# --- FUNÇÕES DE USUÁRIOS ---
 def verificar_credenciais(usuario, senha):
     conn = conectar_bd()
     cursor = conn.cursor()
@@ -62,6 +62,7 @@ def excluir_usuario_id(id_usuario):
     conn.commit()
     conn.close()
 
+# --- FUNÇÕES DE PRODUTOS ---
 def obter_todos_produtos():
     conn = conectar_bd()
     cursor = conn.cursor()
@@ -84,6 +85,7 @@ def excluir_produto_id(id_produto):
     conn.commit()
     conn.close()
 
+# --- FUNÇÕES DE COMANDAS ---
 def obter_todas_comandas():
     conn = conectar_bd()
     cursor = conn.cursor()
