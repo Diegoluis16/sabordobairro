@@ -3,7 +3,9 @@ import time
 from flask import Flask, jsonify, render_template, request, redirect, session
 import model
 
-app = Flask(__name__)
+# CONFIGURAÇÃO DE TRADUÇÃO: Avisa o Flask para ler a pasta visual com o nome 'modelos'
+app = Flask(__name__, template_folder='modelos')
+
 
 # Chave de segurança em bytes nativos exigida para sessões em servidores Linux (Render)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
