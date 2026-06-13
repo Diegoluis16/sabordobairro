@@ -174,9 +174,8 @@ def api_deletar_usuario(id_usuario):
 
 
 if __name__ == '__main__':
-    # Inicializa o banco de dados de forma segura no início do processo
-    model.init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
