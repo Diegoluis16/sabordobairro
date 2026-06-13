@@ -8,40 +8,28 @@ app.secret_key = "chave_secreta_segura"
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    try:
-        if request.method == 'POST':
-            usuario = request.form.get('txt_usuario', '').strip()
-            senha = request.form.get('txt_senha', '').strip()
+    if request.method == 'POST':
+        usuario = request.form.get('txt_usuario', '').strip()
+        senha = request.form.get('txt_senha', '').strip()
 
-            if not usuario or not senha:
-                flash("Usuário e senha são obrigatórios.", "erro")
-                return redirect(url_for('login'))
+        if not usuario or not senha:
+            return render_template('login.html', erro="Usuário e senha são obrigatórios.")
 
-            if model.verificar_credenciais(usuario, senha):
-                session['usuario'] = usuario
-                flash("Login realizado com sucesso!", "sucesso")
-                return redirect(url_for('dashboard'))
-            else:
-                flash("Usuário ou senha inválidos.", "erro")
-                return redirect(url_for('login'))
+        # Valida os dados usando a função do nosso Model
+        usuario_logado = model.verificar_credenciais(usuario, senha)
 
-        # Se for GET, apenas renderiza o formulário
-        return render_template('login.html')
+        if usuario_logado:
+            session['user_id'] = usuario_logado['id']
+            session['user_login'] = usuario_logado['usuario']
+            session['user_nome'] = usuario_logado['nome_completo']
+            # CORREÇÃO CRUCIAL: Redireciona para a rota real '/' do caixa
+            return redirect('/')
+        else:
+            return render_template('login.html', erro="Usuário ou senha inválidos.")
 
-    except Exception as e:
-        print(f"Erro no login: {e}")
-        flash("Erro interno no servidor.", "erro")
-        return redirect(url_for('login'))
+    # GET -> apenas mostra o formulário
+    return render_template('login.html')
 
-@app.route('/dashboard')
-def dashboard():
-    if 'usuario' not in session:
-        flash("Você precisa estar logado para acessar esta página.", "erro")
-        return redirect(url_for('login'))
-    return f"Bem-vindo, {session['usuario']}!"
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 @app.route('/logout')
 def logout():
