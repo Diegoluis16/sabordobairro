@@ -1,6 +1,6 @@
 import sqlite3
 
-# SOLUÇÃO DE HOSPEDAGEM GRATUITA: Grava o arquivo físico na pasta /tmp/ liberada pelo Linux do Render
+# Utiliza a pasta /tmp que é o único local com permissão nativa de escrita na nuvem do Render
 DATABASE = '/tmp/sabor_bairro_mvc.db'
 
 def conectar_bd():
@@ -17,13 +17,13 @@ def init_db():
     conn.commit()
 
     cursor.execute('SELECT COUNT(*) FROM produtos')
-    if cursor.fetchone() == 0:
+    if cursor.fetchone()[0] == 0:
         produtos_iniciais = [("X-Burger", 18.50), ("X-Salada", 20.00), ("Batata Frita", 12.00), ("Refrigerante Lata", 6.00), ("Suco Natural", 8.50)]
-        cursor.executemany('INSERT INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
+        cursor.executemany('INSERT OR IGNORE INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
     
     cursor.execute('SELECT COUNT(*) FROM usuarios')
-    if cursor.fetchone() == 0:
-        cursor.execute('INSERT INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
+    if cursor.fetchone()[0] == 0:
+        cursor.execute('INSERT OR IGNORE INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
     conn.commit()
     conn.close()
 
@@ -54,16 +54,6 @@ def salvar_novo_usuario(usuario, senha, nome_completo):
         sucesso = False
     conn.close()
     return sucesso
-
-def alterar_usuario_bd(id_usuario, usuario, senha, nome_completo):
-    conn = conectar_bd()
-    cursor = conn.cursor()
-    if senha.strip() == "":
-        cursor.execute('UPDATE usuarios SET usuario = ?, nome_completo = ? WHERE id = ?', (usuario, nome_completo, id_usuario))
-    else:
-        cursor.execute('UPDATE usuarios SET usuario = ?, senha = ?, nome_completo = ? WHERE id = ?', (usuario, senha, nome_completo, id_usuario))
-    conn.commit()
-    conn.close()
 
 def excluir_usuario_id(id_usuario):
     conn = conectar_bd()
@@ -115,10 +105,3 @@ def deletar_comanda_paga(mesa):
     cursor.execute('DELETE FROM comandas WHERE numero_mesa = ?', (mesa,))
     conn.commit()
     conn.close()
-
-
-
-
-
-
-
