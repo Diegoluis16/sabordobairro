@@ -162,5 +162,8 @@ def deletar_comanda_paga(mesa):
     conn.commit()
     conn.close()
 
+
+# Força a criação das tabelas na memória RAM assim que o módulo for importado
 init_db()
+
 
