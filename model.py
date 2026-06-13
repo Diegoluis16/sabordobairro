@@ -1,6 +1,6 @@
 import sqlite3
 
-DATABASE = '/data/sabor_bairro_mvc.db'
+DATABASE = ':memory:'
 
 def conectar_bd():
     conn = sqlite3.connect(DATABASE)
@@ -16,12 +16,12 @@ def init_db():
     conn.commit()
 
     cursor.execute('SELECT COUNT(*) FROM produtos')
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone() == 0:
         produtos_iniciais = [("X-Burger", 18.50), ("X-Salada", 20.00), ("Batata Frita", 12.00), ("Refrigerante Lata", 6.00), ("Suco Natural", 8.50)]
         cursor.executemany('INSERT INTO produtos (nome, preco) VALUES (?, ?)', produtos_iniciais)
     
     cursor.execute('SELECT COUNT(*) FROM usuarios')
-    if cursor.fetchone()[0] == 0:
+    if cursor.fetchone() == 0:
         cursor.execute('INSERT INTO usuarios (usuario, senha, nome_completo) VALUES (?, ?, ?)', ('admin', 'admin', 'Administrador Principal'))
     conn.commit()
     conn.close()
