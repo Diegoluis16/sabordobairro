@@ -5,7 +5,9 @@ import model  # Importa o nosso Model do MVC
 app = Flask(__name__)
 
 # CHAVE DE SEGURANÇA: Necessária para o Flask proteger as sessões de login dos usuários
-app.secret_key = 'sabor_do_bairro_chave_ultra_secreta_123'
+# CORREÇÃO CRÍTICA DE PRODUÇÃO: Gera uma chave de criptografia de bytes aceita pelo Linux do Render
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
 
 # GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
 @app.before_request
