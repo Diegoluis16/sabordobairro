@@ -1,11 +1,29 @@
+import os
 import time
-
-from flask import Flask, request, render_template, redirect, url_for, flash, session
-import model  # Certifique-se que este arquivo existe e está no mesmo diretório
+from flask import Flask, jsonify, render_template, request, redirect, session
+import model
 
 app = Flask(__name__)
-app.secret_key = "chave_secreta_segura"
 
+# Chave de segurança em bytes nativos exigida para sessões em servidores Linux (Render)
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+# --- CONFIGURAÇÃO ANTI-CACHE ---
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+# GATILHO SEGURO DE INICIALIZAÇÃO NA INTERNET
+@app.before_request
+def inicializar_banco_na_nuvem():
+    if not hasattr(app, 'banco_inicializado'):
+        model.init_db()
+        app.banco_inicializado = True
+
+# --- ROTAS DE LOGIN E SESSÃO ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -15,58 +33,37 @@ def login():
         if not usuario or not senha:
             return render_template('login.html', erro="Usuário e senha são obrigatórios.")
 
-        # Valida os dados usando a função do nosso Model
         usuario_logado = model.verificar_credenciais(usuario, senha)
 
         if usuario_logado:
             session['user_id'] = usuario_logado['id']
             session['user_login'] = usuario_logado['usuario']
             session['user_nome'] = usuario_logado['nome_completo']
-            # CORREÇÃO CRUCIAL: Redireciona para a rota real '/' do caixa
             return redirect('/')
         else:
             return render_template('login.html', erro="Usuário ou senha inválidos.")
 
-    # GET -> apenas mostra o formulário
     return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
-
-# --- ROTA PRINCIPAL DO CAIXA (FORÇANDO ATUALIZAÇÃO DE CACHE) ---
-
+# --- ROTA PRINCIPAL DO CAIXA ---
 @app.route('/')
 def index():
     if 'user_id' not in session:
         return redirect('/login')
-    # O tempo dinâmico limpa a memória do navegador forçadamente
     return render_template('index.html', versao=str(time.time()), usuario_nome=session['user_nome'])
 
-
 # --- ROTA DO APP DO CLIENTE ---
-
 @app.route('/pedido')
 def pedido_cliente():
-    # Puxa os dados atualizados direto do nosso Model
     lista_produtos = model.obter_todos_produtos()
-    
-    # Prepara os dados no formato exato que o cliente.html espera ler
-    produtos_formatados = []
-    for p in lista_produtos:
-        produtos_formatados.append({
-            'nome': str(p['nome']),
-            'preco': float(p['preco'])
-        })
-        
-    # Envia a lista limpa para a tela do cardápio
-    return render_template('cliente.html', produtos_cardapio=produtos_formatados)
+    return render_template('cliente.html', produtos_cardapio=lista_produtos)
 
 # --- ROTAS DA API: PRODUTOS ---
-
 @app.route('/api/produtos', methods=['GET'])
 def api_listar_produtos():
     if 'user_id' not in session:
@@ -92,9 +89,7 @@ def api_deletar_produto(id_produto):
     model.excluir_produto_id(id_produto)
     return jsonify({'sucesso': True})
 
-
 # --- ROTAS DA API: COMANDAS ---
-
 @app.route('/api/comandas', methods=['GET'])
 def api_listar_comandas():
     return jsonify(model.obter_todas_comandas())
@@ -116,9 +111,7 @@ def api_fechar_comanda(mesa):
     model.deletar_comanda_paga(mesa)
     return jsonify({'sucesso': True})
 
-
 # --- ROTAS DA API: GESTÃO DE USUÁRIOS ---
-
 @app.route('/api/usuarios', methods=['GET'])
 def api_listar_usuarios():
     if 'user_id' not in session:
@@ -137,27 +130,10 @@ def api_cadastrar_usuario():
     if not usuario or not senha or not nome:
         return jsonify({'erro': 'Preencha todos os campos'}), 400
         
-    # CORREÇÃO DA VARIÁVEL: Alinhado 'criou' com o teste do 'if' de forma idêntica
     criou = model.salvar_novo_usuario(usuario, senha, nome)
     if criou:
         return jsonify({'sucesso': True})
     return jsonify({'erro': 'Este nome de usuário já existe'}), 400
-
-
-@app.route('/api/usuarios/<int:id_usuario>', methods=['PUT'])
-def api_alterar_usuario(id_usuario):
-    if 'user_id' not in session:
-        return jsonify({'erro': 'Não autorizado'}), 401
-    dados = request.json
-    usuario = dados.get('usuario', '').strip()
-    senha = dados.get('senha', '').strip()
-    nome = dados.get('nome_completo', '').strip()
-    
-    if not usuario or not nome:
-        return jsonify({'erro': 'Campos obrigatórios vazios'}), 400
-        
-    model.alterar_usuario_bd(id_usuario, usuario, senha, nome)
-    return jsonify({'sucesso': True})
 
 @app.route('/api/usuarios/<int:id_usuario>', methods=['DELETE'])
 def api_deletar_usuario(id_usuario):
@@ -168,7 +144,6 @@ def api_deletar_usuario(id_usuario):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
 
 
 
