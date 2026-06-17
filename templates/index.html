@@ -218,7 +218,7 @@ function carregarUsuariosDoServidor() {
                         texto.innerHTML = "<b>" + u.nome_completo + "</b> (Login: " + u.usuario + ")";
                         linhaDiv.appendChild(texto);
                         
-                        if (u.usuario == 'admin') {
+                        if (u.usuario !== 'admin') {
                             var btnExcluir = document.createElement("button");
                             btnExcluir.setAttribute("style", "color:var(--danger); background:none; border:none; cursor:pointer; font-weight:bold; padding: 5px 10px;");
                             btnExcluir.innerText = "Excluir";
