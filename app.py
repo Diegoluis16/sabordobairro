@@ -16,7 +16,7 @@ def add_header(response):
 # NOVA ESTRUTURA BLINDADA: Injeta a tela de login como texto direto para evitar o erro de leitura do template
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    if request.method == 'GET':
         usuario = request.form.get('txt_usuario', '').strip()
         senha = request.form.get('txt_senha', '').strip()
         
