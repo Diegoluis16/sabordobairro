@@ -19,60 +19,18 @@ def login():
     if request.method == 'POST':
         usuario = request.form.get('txt_usuario', '').strip()
         senha = request.form.get('txt_senha', '').strip()
-
-        if not usuario or not senha:
-            return "<h3>Usuário e senha são obrigatórios! <a href='/login'>Tentar novamente</a></h3>", 400
-
+        
         usuario_logado = model.verificar_credenciais(usuario, senha)
-
+        
         if usuario_logado:
             session['user_id'] = usuario_logado['id']
             session['user_login'] = usuario_logado['usuario']
             session['user_nome'] = usuario_logado['nome_completo']
             return redirect('/')
         else:
-            return "<h3>Usuário ou senha incorretos! <a href='/login'>Tentar novamente</a></h3>", 401
-
-# MÉTODO GET SEGURO: Entrega o formulário sem precisar ler a pasta do servidor
-    html_login = '''
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sabor do Bairro - Login de Segurança</title>
-        <style>
-            :root { --primary: #cc0000; --dark: #2c3e50; }
-            * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-            body { background: var(--dark); display: flex; justify-content: center; align-items: center; height: 100vh; }
-            .login-card { background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 360px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-            .login-card h2 { text-align: center; color: var(--dark); margin-bottom: 20px; }
-            .form-group { margin-bottom: 15px; }
-            .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-            .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-            .btn-entrar { background: var(--primary); color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        </style>
-    </head>
-    <body>
-        <div class="login-card">
-           <h2>Sabor do Bairro</h2>
-           <form action="/login" method="GET"> 
-               <div class="form-group">
-                   <label>Usuário:</label>
-                   <input type="text" name="txt_usuario" required placeholder="Ex: admin">
-                </div>
-                <div class="form-group">
-                    <label>Senha:</label>
-                    <input type="password" name="txt_senha" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn-entrar">ENTRAR NO SISTEMA</button>
-            </form>
-        </div>
-    </body>
-    </html>
- '''
-   return html_login
-
+            return render_template('login.html', erro='Usuário ou senha incorretos!')
+            
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
