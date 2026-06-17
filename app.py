@@ -70,8 +70,8 @@ def login():
         #</div>
    # </body>
     #</html>
-    '''
-   # return html_login
+   # '''
+  #  return html_login
 
 
 @app.route('/logout')
